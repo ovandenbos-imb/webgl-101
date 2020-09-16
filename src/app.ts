@@ -53,6 +53,6 @@ export class App {
 		this.gl.vertexAttrib1f(point, 100);
 
 		const color = this.gl.getUniformLocation(this.shaderProgram, 'color');
-		this.gl.uniform4f(color, 1, 1, 0, 0.7);
+		this.gl.uniform4f(color, 1, 1, 0.5, 0.7);
 	}
 }
