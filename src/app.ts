@@ -4,6 +4,7 @@ export class App {
 	private gl: WebGLRenderingContext;
 	private shaderProgram: WebGLProgram;
 	private shader: Shader;
+	private drawBound: (time: number) => void;
 
 	constructor() {
 		const canvas = <HTMLCanvasElement>document.getElementById('canvas');
@@ -17,12 +18,15 @@ export class App {
 	init() {
 		this.createShaders();
 		this.createVertices();
-		this.draw();
+		this.drawBound = this.draw.bind(this);
+		requestAnimationFrame(this.drawBound);
+		// this.draw()
 	}
 
-	draw() {
+	draw(time: number) {
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 		this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+		requestAnimationFrame(this.drawBound);
 	}
 
 	createShaders() {
@@ -53,6 +57,6 @@ export class App {
 		this.gl.vertexAttrib1f(point, 100);
 
 		const color = this.gl.getUniformLocation(this.shaderProgram, 'color');
-		this.gl.uniform4f(color, 1, 1, 0.5, 0.7);
+		this.gl.uniform4f(color, 1, 1, 0, 0.7);
 	}
 }
