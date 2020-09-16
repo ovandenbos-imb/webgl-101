@@ -1,10 +1,15 @@
 import { Shader } from './shader';
+import * as THREE from 'three';
 
 export class App {
 	private gl: WebGLRenderingContext;
 	private shaderProgram: WebGLProgram;
 	private shader: Shader;
 	private drawBound: (time: number) => void;
+	private mesh : THREE.Mesh;
+	private renderer : THREE.WebGLRenderer;
+	private scene : THREE.Scene;
+	private camera : THREE.PerspectiveCamera;
 
 	constructor() {
 		const canvas = <HTMLCanvasElement>document.getElementById('canvas');
@@ -16,16 +21,47 @@ export class App {
 	}
 
 	init() {
+		/*
 		this.createShaders();
 		this.createVertices();
 		this.drawBound = this.draw.bind(this);
 		requestAnimationFrame(this.drawBound);
 		// this.draw()
+		*/
+		/*
+		Position (1735.0, 1968.4, -1191.0)
+		Direction (0.2, 0.7, 0.7)
+		Fov 21.23931
+		Near: 512, Far: 4096
+		*/
+		this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10 );
+		this.camera.position.z = 1;
+	
+		this.scene = new THREE.Scene();
+	
+		let geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
+		let material = new THREE.MeshNormalMaterial();
+	
+		this.mesh = new THREE.Mesh( geometry, material );
+		this.scene.add( this.mesh );
+	
+		this.renderer = new THREE.WebGLRenderer( { antialias: true } );
+		this.renderer.setSize( window.innerWidth, window.innerHeight );
+		document.body.appendChild( this.renderer.domElement );
+		this.drawBound = this.draw.bind(this);
+		requestAnimationFrame(this.drawBound);
 	}
 
 	draw(time: number) {
+		/*
 		this.gl.clear(this.gl.COLOR_BUFFER_BIT);
 		this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+		
+		*/
+		this.mesh.rotation.x += 0.01;
+    	this.mesh.rotation.y += 0.04;
+ 
+		this.renderer.render( this.scene, this.camera );
 		requestAnimationFrame(this.drawBound);
 	}
 
