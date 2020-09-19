@@ -1,6 +1,10 @@
 import { Shader } from './shader';
 import * as THREE from 'three';
 
+
+
+
+
 export class App {
 	private gl: WebGLRenderingContext;
 	private shaderProgram: WebGLProgram;
@@ -10,17 +14,22 @@ export class App {
 	private renderer : THREE.WebGLRenderer;
 	private scene : THREE.Scene;
 	private camera : THREE.PerspectiveCamera;
+	private texture : THREE.Texture;
 
 	constructor() {
+		/*
 		const canvas = <HTMLCanvasElement>document.getElementById('canvas');
 		this.gl = canvas.getContext('webgl');
 		this.shader = new Shader();
 
 		this.gl.viewport(0, 0, canvas.width, canvas.height);
 		this.gl.clearColor(0, 0, 0, 1);
+		*/
 	}
 
 	init() {
+		const canvas = <HTMLCanvasElement>document.getElementById('canvas');
+		const ratio = canvas.width / canvas.height;
 		/*
 		this.createShaders();
 		this.createVertices();
@@ -61,41 +70,170 @@ export class App {
             X: 360,
             Y: 500,
 		},
+
+		Unity Camera
+		Unity rotation : ZXY :
+		rot = [43.96, -14.58, -3.017]
+		position =  1735, 1968, -1191
 		
+		unity RH Rot :  ZXY   [ x: 43.96, y: -14.58, z: -3.017 ]    quat [ 0.3680311, -0.127401, -0.0716913, 0.9182497 ]
+		                    [ x: 45, y: 0, z: 0 ]         [ -0.4871745, 0, 0, -0.8733046 ]
+		Three LH Rot :  XYZ   [ x: 43.3495146, y: -16.6629511, z: -2.2664458 ]  quat [ 0.3679486, -0.1274039, -0.0716197, 0.9182879 ]
 		*/
-		this.camera = new THREE.PerspectiveCamera( 20, window.innerWidth / window.innerHeight, 1, 4096 );
-		this.camera.position.z = 1;
+		this.camera = new THREE.PerspectiveCamera( 21.23931, ratio, 512, 4096 );
+		// this.camera.position.z = 1;
 		//this.camera = new THREE.PerspectiveCamera( 21, window.innerWidth / window.innerHeight, 512, 4096 );
 		//1735.0, 1968.4, -1191.0
-		this.camera.position.set( 1735, 1968, 1191) ;
+		this.camera.position.set( 1735, 1968.4, -1191) ;
 		//1581.62,0.99,551.98
-		const target = new THREE.Vector3(1581,1,551)
-		this.camera.lookAt(target);
+		const posR = new THREE.Vector3(1581, 1.0,551);
+		const posG = new THREE.Vector3(1415.26, 1.0, 666.77);
+		const posB = new THREE.Vector3(1540.04, 1.07, 846.82);
+		// this.camera.lookAt(0,0,0);
+		// this.camera.lookAt(posR);
+		
 		
 		this.scene = new THREE.Scene();
-	
+		//background
+		const textureImage = require('../background.png');
+		this.texture = new THREE.TextureLoader().load(textureImage.default);
+		
+		this.scene.background = this.texture;
+
+
+		const depthImage = require('../depth.png');
+
+		const color = 0xFFFFFF;
+		const intensity = 1;
+		const light = new THREE.DirectionalLight(color, intensity);
+		light.position.set(-1, 2, 4);
+		this.scene.add(light);
+
+		var helper = new THREE.CameraHelper( this.camera );
+		this.scene.add( helper );
+		var axesHelper = new THREE.AxesHelper( 10000 );
+		this.scene.add( axesHelper );
+
+		var boxR = new THREE.Box3(posR);
+		var boxG = new THREE.Box3(posG);
+		var boxB = new THREE.Box3(posB);
+
+
 		let geometry = new THREE.BoxGeometry( 50, 50, 50 );
 		let material = new THREE.MeshNormalMaterial();
-	
-		this.mesh = new THREE.Mesh( geometry, material );
-		this.mesh.position.copy(target);
+		this.mesh = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( {color: 'red'} ) );
+		this.mesh.position.copy(posR);
 		//this.mesh.position.set( );
 		this.scene.add( this.mesh );
+		let mesh1 = this.mesh;
 
-		let mesh2 = new THREE.Mesh( geometry, material );
-		mesh2.position.set(1415.26, 1.0, 666.77);
+		let mesh2 = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( {color: 'green'} ) );
+		mesh2.position.copy(posG);
 		this.scene.add( mesh2 );
 
-		let mesh3 = new THREE.Mesh( geometry, material );
-		mesh3.position.set(1540.04, 1.07, 846.82);
+		let mesh3 = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( {color: 'blue'} ) );
+		mesh3.position.copy(posB);
 		this.scene.add( mesh3 );
+
+		const sphere = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( {color: 'white'} ) );
+		this.scene.add( sphere );
 		
-		this.renderer = new THREE.WebGLRenderer( { antialias: true } );
-		this.renderer.setSize( window.innerWidth, window.innerHeight );
+		this.renderer = new THREE.WebGLRenderer( { canvas: canvas } ); // alpha: true, antialias: true
+		this.renderer.autoClearColor = false;
+		this.renderer.setSize( canvas.width , canvas.height );
 		document.body.appendChild( this.renderer.domElement );
 		this.drawBound = this.draw.bind(this);
 		requestAnimationFrame(this.drawBound);
+
+		
+		// convert Quaternion from Left-handed coordinate system to Right-handed
+		// const UQuat = [ 0.3679486, -0.1274039, -0.0716197, 0.9182879 ];
+		const UQuatA = [ -0.4871745, 0, 0, -0.8733046 ];
+		let UQuat = new THREE.Quaternion();
+		UQuat.fromArray(UQuatA );
+		
+		//[43.96, -14.58, -3.017]
+		let angleX = 43.96;
+		let angleY = -14.58;
+		let angleZ = 0;	//-3.017
+		// ZXY <> XYZ and LH > RH.  
+		// Flip Y and Z : ZXY > YXZ 
+		let cameraRot = [THREE.MathUtils.degToRad(90 - angleX),THREE.MathUtils.degToRad(-angleZ), THREE.MathUtils.degToRad(-angleY)]
+		var unityEuler = new THREE.Euler( cameraRot[0], cameraRot[1], cameraRot[2], 'YZX' ); 
+		// unityEuler.reorder('XYZ');
+		var unityQuat = new THREE.Quaternion();
+		unityQuat.setFromEuler(unityEuler);
+		UQuat = unityQuat;
+
+		//https://stackoverflow.com/questions/18066581/convert-unity-transforms-to-three-js-rotations
+		// var q = new THREE.Quaternion( -UQuat[0], -UQuat[2], -UQuat[1], UQuat[3] );
+		var q = new THREE.Quaternion( UQuat.x, UQuat.y, UQuat.z, UQuat.w );
+		//var q = new THREE.Quaternion( -UQuat.x, -UQuat.y, -UQuat.z, UQuat.w );
+		var v = new THREE.Euler();  
+		v.setFromQuaternion( q );
+		this.camera.rotation.copy( v );
+		//v.setFromQuaternion( unityQuat );
+		// v.y += Math.PI; // Y is 180 degrees off
+		// v.z *= -1; // flip Z
+
+		// var mR = new THREE.Euler( 43.96, -14.58, -3.017, 'ZXY' );
+		// this.camera.position.set( 1735, 1968, -1191) ;
+		// this.camera.setRotationFromEuler( mR );
+		this.camera.position.set( this.camera.position.x, this.camera.position.z, this.camera.position.y) ;
+		this.camera.setRotationFromEuler( unityEuler );
+		mesh1.position.set( mesh1.position.x, mesh1.position.z, mesh1.position.y) ;
+		mesh2.position.set( mesh2.position.x, mesh2.position.z, mesh2.position.y) ;
+		mesh3.position.set( mesh3.position.x, mesh3.position.z, mesh3.position.y) ;
+
+		//Draw Line
+		var lm = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 10 } );
+		var points = [];
+		points.push( mesh1.position );
+		points.push( mesh2.position );
+		var lg = new THREE.BufferGeometry().setFromPoints( points );
+		var line = new THREE.Line( lg, lm );
+		this.scene.add( line );
+
+		//Draw Circle
+		var cg = new THREE.CircleGeometry( 60, 32 );
+		var cm = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+		var circle = new THREE.Mesh( cg, cm );
+		circle.position.set(mesh3.position.x, mesh3.position.y+300, mesh3.position.z-50)
+		this.scene.add( circle );
+
+		//Face Mesh
+		var fg = new THREE.Geometry();
+		fg.vertices.push(
+			new THREE.Vector3(-1, -1,  0),  // 0
+			new THREE.Vector3( 1, -1,  0),  // 1
+			new THREE.Vector3(-1,  1,  0),  // 2
+			new THREE.Vector3( 1,  1,  0),  // 3
+		);
+
+		fg.faces.push(
+			new THREE.Face3(0, 3, 2),
+			new THREE.Face3(0, 1, 3),
+		);
+
+		const fm = new THREE.MeshBasicMaterial({color: 0xFF4444});
+		const face = new THREE.Mesh(fg, fm);
+		face.position.set(mesh2.position.x, mesh2.position.y-100, mesh2.position.z-50)
+		face.scale.set(60, 60, 60);
+		  this.scene.add(face);
+		  
+		
 	}
+
+	resizeRendererToDisplaySize(renderer) {
+		const canvas = renderer.domElement;
+		const width = canvas.clientWidth;
+		const height = canvas.clientHeight;
+		const needResize = canvas.width !== width || canvas.height !== height;
+		if (needResize) {
+		  renderer.setSize(width, height, false);
+		}
+		return needResize;
+	  }
 
 	draw(time: number) {
 		/*
@@ -103,13 +241,21 @@ export class App {
 		this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
 		
 		*/
-		this.mesh.rotation.x += 0.01;
-    	this.mesh.rotation.y += 0.04;
+		
+
+		if (this.resizeRendererToDisplaySize(this.renderer)) {
+			const canvas = this.renderer.domElement;
+			this.camera.aspect = canvas.clientWidth / canvas.clientHeight;
+			this.camera.updateProjectionMatrix();
+		  }
+
+		//this.mesh.rotation.x += 0.01;
+    	//this.mesh.rotation.y += 0.04;
  
 		this.renderer.render( this.scene, this.camera );
 		requestAnimationFrame(this.drawBound);
 	}
-
+	/*
 	createShaders() {
 		// to put webgl shaders into the page, we need to create a 'program',
 		// and attach vertex & fragment shaders into the program
@@ -140,4 +286,5 @@ export class App {
 		const color = this.gl.getUniformLocation(this.shaderProgram, 'color');
 		this.gl.uniform4f(color, 1, 1, 0, 0.7);
 	}
+	*/
 }

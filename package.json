@@ -11,6 +11,8 @@
 	"devDependencies": {
 		"awesome-typescript-loader": "^5.2.1",
 		"eslint": "^5.6.1",
+		"file-loader": "^6.1.0",
+		"image-webpack-loader": "^7.0.1",
 		"prettier": "1.14.3",
 		"source-map-loader": "^0.2.4",
 		"typescript": "^3.7.4",
