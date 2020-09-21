@@ -80,17 +80,11 @@ export class App {
 		                    [ x: 45, y: 0, z: 0 ]         [ -0.4871745, 0, 0, -0.8733046 ]
 		Three LH Rot :  XYZ   [ x: 43.3495146, y: -16.6629511, z: -2.2664458 ]  quat [ 0.3679486, -0.1274039, -0.0716197, 0.9182879 ]
 		*/
-		this.camera = new THREE.PerspectiveCamera( 21.23931, ratio, 512, 4096 );
-		// this.camera.position.z = 1;
-		//this.camera = new THREE.PerspectiveCamera( 21, window.innerWidth / window.innerHeight, 512, 4096 );
-		//1735.0, 1968.4, -1191.0
+		this.camera = new THREE.PerspectiveCamera( 60, ratio, 512, 4096 ); //21.23931
 		this.camera.position.set( 1735, 1968.4, -1191) ;
-		//1581.62,0.99,551.98
 		const posR = new THREE.Vector3(1581, 1.0,551);
 		const posG = new THREE.Vector3(1415.26, 1.0, 666.77);
 		const posB = new THREE.Vector3(1540.04, 1.07, 846.82);
-		// this.camera.lookAt(0,0,0);
-		// this.camera.lookAt(posR);
 		
 		
 		this.scene = new THREE.Scene();
@@ -102,6 +96,7 @@ export class App {
 
 
 		const depthImage = require('../depth.png');
+		
 
 		const color = 0xFFFFFF;
 		const intensity = 1;
@@ -148,30 +143,59 @@ export class App {
 		
 		// convert Quaternion from Left-handed coordinate system to Right-handed
 		// const UQuat = [ 0.3679486, -0.1274039, -0.0716197, 0.9182879 ];
-		const UQuatA = [ -0.4871745, 0, 0, -0.8733046 ];
-		let UQuat = new THREE.Quaternion();
-		UQuat.fromArray(UQuatA );
+		// const UQuatA = [ -0.4871745, 0, 0, -0.8733046 ];
+		// let UQuat = new THREE.Quaternion();
+		// UQuat.fromArray(UQuatA );
 		
 		//[43.96, -14.58, -3.017]
-		let angleX = 43.96;
-		let angleY = -14.58;
-		let angleZ = 0;	//-3.017
+		let angleX = 45;
+		let angleY = 10;
+		let angleZ = 0; //-14.58;
+		
+		/* Euler Approach */
 		// ZXY <> XYZ and LH > RH.  
 		// Flip Y and Z : ZXY > YXZ 
 		let cameraRot = [THREE.MathUtils.degToRad(90 - angleX),THREE.MathUtils.degToRad(-angleZ), THREE.MathUtils.degToRad(-angleY)]
 		var unityEuler = new THREE.Euler( cameraRot[0], cameraRot[1], cameraRot[2], 'YZX' ); 
 		// unityEuler.reorder('XYZ');
-		var unityQuat = new THREE.Quaternion();
-		unityQuat.setFromEuler(unityEuler);
-		UQuat = unityQuat;
+		
 
+		/* Quaternion Approach */
+		/*
+		var unityQuat = new THREE.Quaternion();
+		var unityEuler = new THREE.Euler(THREE.MathUtils.degToRad(angleX), THREE.MathUtils.degToRad(angleY),THREE.MathUtils.degToRad(angleZ), 'ZXY' ); 
+		unityQuat.setFromEuler(unityEuler);
 		//https://stackoverflow.com/questions/18066581/convert-unity-transforms-to-three-js-rotations
 		// var q = new THREE.Quaternion( -UQuat[0], -UQuat[2], -UQuat[1], UQuat[3] );
-		var q = new THREE.Quaternion( UQuat.x, UQuat.y, UQuat.z, UQuat.w );
+		const UQuat = unityQuat;
+		var q = new THREE.Quaternion( UQuat.x, -UQuat.z, -UQuat.y, UQuat.w );
 		//var q = new THREE.Quaternion( -UQuat.x, -UQuat.y, -UQuat.z, UQuat.w );
 		var v = new THREE.Euler();  
 		v.setFromQuaternion( q );
-		this.camera.rotation.copy( v );
+		unityEuler = v;
+		*/
+		this.camera.setRotationFromEuler( unityEuler );
+		
+		this.camera.position.set( this.camera.position.x, this.camera.position.z, this.camera.position.y) ;
+		mesh1.position.set( mesh1.position.x, mesh1.position.z, mesh1.position.y) ;
+		mesh2.position.set( mesh2.position.x, mesh2.position.z, mesh2.position.y) ;
+		mesh3.position.set( mesh3.position.x, mesh3.position.z, mesh3.position.y) ;
+
+		/*
+		// https://stackoverflow.com/questions/1263072/changing-a-matrix-from-right-handed-to-left-handed-coordinate-system
+		var flip = new THREE.Matrix4();
+		flip.set(   1, 0, 0, 0,
+					0, 0, 1, 0,
+					0, 1, 0, 0,
+					0, 0, 0, 1 );
+	   
+		let mCamera = this.camera.matrix;
+		mCamera.multiply(flip);
+		//mCamera.premultiply(flip);
+		this.camera.matrix.copy(mCamera);
+		this.camera.updateMatrixWorld( true );
+		*/
+		
 		//v.setFromQuaternion( unityQuat );
 		// v.y += Math.PI; // Y is 180 degrees off
 		// v.z *= -1; // flip Z
@@ -179,11 +203,8 @@ export class App {
 		// var mR = new THREE.Euler( 43.96, -14.58, -3.017, 'ZXY' );
 		// this.camera.position.set( 1735, 1968, -1191) ;
 		// this.camera.setRotationFromEuler( mR );
-		this.camera.position.set( this.camera.position.x, this.camera.position.z, this.camera.position.y) ;
-		this.camera.setRotationFromEuler( unityEuler );
-		mesh1.position.set( mesh1.position.x, mesh1.position.z, mesh1.position.y) ;
-		mesh2.position.set( mesh2.position.x, mesh2.position.z, mesh2.position.y) ;
-		mesh3.position.set( mesh3.position.x, mesh3.position.z, mesh3.position.y) ;
+		
+		
 
 		//Draw Line
 		var lm = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 10 } );
