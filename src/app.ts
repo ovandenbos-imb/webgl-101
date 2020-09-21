@@ -80,7 +80,7 @@ export class App {
 		                    [ x: 45, y: 0, z: 0 ]         [ -0.4871745, 0, 0, -0.8733046 ]
 		Three LH Rot :  XYZ   [ x: 43.3495146, y: -16.6629511, z: -2.2664458 ]  quat [ 0.3679486, -0.1274039, -0.0716197, 0.9182879 ]
 		*/
-		this.camera = new THREE.PerspectiveCamera( 60, ratio, 512, 4096 ); //21.23931
+		this.camera = new THREE.PerspectiveCamera( 21.23931, ratio, 512, 4096 ); //21.23931
 		this.camera.position.set( 1735, 1968.4, -1191) ;
 		const posR = new THREE.Vector3(1581, 1.0,551);
 		const posG = new THREE.Vector3(1415.26, 1.0, 666.77);
@@ -148,15 +148,15 @@ export class App {
 		// UQuat.fromArray(UQuatA );
 		
 		//[43.96, -14.58, -3.017]
-		let angleX = 45;
-		let angleY = 10;
-		let angleZ = 0; //-14.58;
+		let angleX = 43.96;
+		let angleY = -14.58;
+		let angleZ = -3.017; //-14.58;
 		
 		/* Euler Approach */
 		// ZXY <> XYZ and LH > RH.  
 		// Flip Y and Z : ZXY > YXZ 
-		let cameraRot = [THREE.MathUtils.degToRad(90 - angleX),THREE.MathUtils.degToRad(-angleZ), THREE.MathUtils.degToRad(-angleY)]
-		var unityEuler = new THREE.Euler( cameraRot[0], cameraRot[1], cameraRot[2], 'YZX' ); 
+		let cameraRot = [THREE.MathUtils.degToRad(-angleX),THREE.MathUtils.degToRad(-angleY), THREE.MathUtils.degToRad(angleZ)]
+		var unityEuler = new THREE.Euler( cameraRot[0], cameraRot[1], cameraRot[2], 'YXZ' ); 
 		// unityEuler.reorder('XYZ');
 		
 
@@ -176,10 +176,10 @@ export class App {
 		*/
 		this.camera.setRotationFromEuler( unityEuler );
 		
-		this.camera.position.set( this.camera.position.x, this.camera.position.z, this.camera.position.y) ;
-		mesh1.position.set( mesh1.position.x, mesh1.position.z, mesh1.position.y) ;
-		mesh2.position.set( mesh2.position.x, mesh2.position.z, mesh2.position.y) ;
-		mesh3.position.set( mesh3.position.x, mesh3.position.z, mesh3.position.y) ;
+		this.camera.position.set( this.camera.position.x, this.camera.position.y, -this.camera.position.z) ;
+		mesh1.position.set( mesh1.position.x, mesh1.position.y, -mesh1.position.z) ;
+		mesh2.position.set( mesh2.position.x, mesh2.position.y, -mesh2.position.z) ;
+		mesh3.position.set( mesh3.position.x, mesh3.position.y, -mesh3.position.z) ;
 
 		/*
 		// https://stackoverflow.com/questions/1263072/changing-a-matrix-from-right-handed-to-left-handed-coordinate-system
@@ -220,7 +220,7 @@ export class App {
 		var cm = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
 		var circle = new THREE.Mesh( cg, cm );
 		circle.position.set(mesh3.position.x, mesh3.position.y+300, mesh3.position.z-50)
-		this.scene.add( circle );
+		//this.scene.add( circle );
 
 		//Face Mesh
 		var fg = new THREE.Geometry();
@@ -240,7 +240,7 @@ export class App {
 		const face = new THREE.Mesh(fg, fm);
 		face.position.set(mesh2.position.x, mesh2.position.y-100, mesh2.position.z-50)
 		face.scale.set(60, 60, 60);
-		  this.scene.add(face);
+		//this.scene.add(face);
 		  
 		
 	}
